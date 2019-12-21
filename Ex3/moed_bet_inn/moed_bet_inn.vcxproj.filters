@@ -21,6 +21,12 @@
     <ClCompile Include="moed_bet_inn.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="resident_therad_function.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main_therad_function.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HardCodedData.h">
