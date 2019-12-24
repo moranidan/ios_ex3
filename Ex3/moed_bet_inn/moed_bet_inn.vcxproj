@@ -119,9 +119,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.c" />
-    <ClCompile Include="main_therad_function.c" />
+    <ClCompile Include="main_thread_function.c" />
     <ClCompile Include="moed_bet_inn.c" />
-    <ClCompile Include="resident_therad_function.c" />
+    <ClCompile Include="resident_thread_function.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HardCodedData.h" />

@@ -34,24 +34,29 @@ typedef struct
 	ROOM *p_rooms;
 	RESIDENT p_resident;
 	char *main_folder_path;
-} p_resident_therad_params;
+	int *p_days;
+} resident_thread_params;
 
 typedef struct  //TODO
 {
-	int max; //delete after thinking
+	int *p_days;
+	ROOM *p_rooms;
+	RESIDENT *p_residents;
+	int residents_num;
 	//need to think
-} p_main_therad_params;
+} main_thread_params;
 
 
 
 // Function Declarations -------------------------------------------------------
 int initialization_names(char *main_folder_path, RESIDENT *p_residents, ROOM *p_rooms, int rooms_num, int *residents_num);
 int initialization_rooms(char *main_folder_path, ROOM *p_rooms, int *rooms_num);
-void initialization_p_params(char *main_folder_path, RESIDENT *p_residents, ROOM *p_rooms, p_resident_therad_params *p_params, int residents_num);
-int create_resident_threads(HANDLE *p_resident_thread_handles, DWORD *p_thread_ids, int *residents_num, p_resident_therad_params *p_params);
+void initialization_p_resident_thread_params(char *main_folder_path, RESIDENT *p_residents, ROOM *p_rooms, resident_thread_params *p_params, int residents_num);
+void initialization_p_main_thread_params(RESIDENT *p_residents, ROOM *p_rooms, main_thread_params p_main_thread_params, int residents_num);
+int create_resident_threads(HANDLE *p_resident_thread_handles, DWORD *p_thread_ids, int *residents_num, resident_thread_params *p_params);
+int create_main_thread(HANDLE *p_main_thread_handle, DWORD *p_main_thread_id, main_thread_params *p_main_thread_params);
 static HANDLE CreateThreadSimple(LPTHREAD_START_ROUTINE p_start_routine,LPVOID p_thread_parameters,LPDWORD p_thread_id);
 DWORD WINAPI Promote_days(LPVOID lpParam);
-int main_therad_function();  //TODO
-DWORD WINAPI resident_enter_therad(LPVOID lpParam);
-int therad_function(p_resident_therad_params *p_params);   //TODO
-void creat_book_log_line(p_resident_therad_params *p_params, char *write_enter, char *status, char *day);
+int main_thread_function(main_thread_params *p_main_thread_params);  //TODO
+DWORD WINAPI resident_enter_thread(LPVOID lpParam);
+int thread_function(resident_thread_params *p_params);   //TODO
