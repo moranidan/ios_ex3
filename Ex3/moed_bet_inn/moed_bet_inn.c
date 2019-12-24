@@ -92,7 +92,7 @@ void initialization_p_resident_thread_params(char *main_folder_path,RESIDENT *p_
 }
 
 void initialization_p_main_thread_params(RESIDENT *p_residents, ROOM *p_rooms, main_thread_params *p_main_thread_params,int residents_num, int *days) {
-	p_main_thread_params->p_days = &days;
+	p_main_thread_params->p_days = days;
 	p_main_thread_params->p_residents = p_residents;
 	p_main_thread_params->p_rooms = p_rooms;
 	p_main_thread_params->residents_num = residents_num;
