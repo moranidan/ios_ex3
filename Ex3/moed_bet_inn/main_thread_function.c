@@ -30,7 +30,7 @@ int main_thread_function(main_thread_params *p_main_thread_params) {
 
 		//}
 
-		wait(10000);
+		Sleep(1000);
 		HANDLE days_mutex_handle = OpenMutex(SYNCHRONIZE, FALSE, MUTEX_DAYS_NAME);
 		DWORD wait_code;
 		wait_code = WaitForSingleObject(days_mutex_handle, INFINITE);

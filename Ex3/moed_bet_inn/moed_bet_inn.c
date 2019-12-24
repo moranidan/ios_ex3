@@ -73,7 +73,7 @@ int initialization_rooms(char *main_folder_path, ROOM *p_rooms,int *rooms_num) {
 
 		if (room_full == NULL) {
 			printf("cannot open rooms semaphore");
-			return ERR_CODE_OPEN_SEMAPHORE;
+			return ERR_CODE_SEMAPHORE;
 		}
 		p_rooms[i].room_full = room_full;
 		i += 1;
@@ -91,11 +91,11 @@ void initialization_p_resident_thread_params(char *main_folder_path,RESIDENT *p_
 	}
 }
 
-void initialization_p_main_thread_params(RESIDENT *p_residents, ROOM *p_rooms, main_thread_params p_main_thread_params,int residents_num, int *days) {
-	p_main_thread_params.p_days = &days;
-	p_main_thread_params.p_residents = p_residents;
-	p_main_thread_params.p_rooms = p_rooms;
-	p_main_thread_params.residents_num = residents_num;
+void initialization_p_main_thread_params(RESIDENT *p_residents, ROOM *p_rooms, main_thread_params *p_main_thread_params,int residents_num, int *days) {
+	p_main_thread_params->p_days = &days;
+	p_main_thread_params->p_residents = p_residents;
+	p_main_thread_params->p_rooms = p_rooms;
+	p_main_thread_params->residents_num = residents_num;
 }
 
 //create threads functions -----------------------------------------------------------------------------------------
@@ -156,7 +156,7 @@ int create_main_thread(HANDLE *p_main_thread_handle, DWORD *p_main_thread_id, ma
 
 	DWORD wait_code;
 
-	wait_code = WaitForSingleObjects(p_main_thread_handle, THREAD_TIMEOUT_IN_MILLISECONDS);	// wait for threads to run
+	wait_code = WaitForSingleObject(p_main_thread_handle, THREAD_TIMEOUT_IN_MILLISECONDS);	// wait for threads to run
 	if (WAIT_OBJECT_0 != wait_code)			// check for errors
 	{
 		printf("Error when waiting\n");

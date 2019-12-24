@@ -75,8 +75,8 @@ int main(int argc, char *argv[]) {
 	}
 	HANDLE p_main_thread_handle = NULL;
 	DWORD p_main_thread_id = NULL;
-	main_thread_params *p_main_thread_params = NULL;
-	initialization_p_main_thread_params(p_residents, p_rooms, *p_main_thread_params,residents_num,days);
+	main_thread_params *p_main_thread_params;
+	initialization_p_main_thread_params(p_residents, p_rooms, *p_main_thread_params, residents_num, days);
 	return_code = create_main_thread(p_main_thread_handle,p_main_thread_id, p_main_thread_params);
 	initialization_p_resident_thread_params(main_folder_path, p_residents, p_rooms, p_resident_thread_params, residents_num,days);
 	return_code = create_resident_threads(p_resident_thread_handles, p_thread_ids,residents_num,p_resident_thread_params);

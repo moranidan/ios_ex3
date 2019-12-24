@@ -1,7 +1,9 @@
 // HardCodedData.h
 
 #pragma once
+#include <stdio.h>
 #include <tchar.h>
+#include <Windows.h>
 
 // Constants -------------------------------------------------------------------
 
@@ -24,7 +26,7 @@ static const int ERR_CODE_DEFAULT = 0;
 static const int ERR_CODE_NOT_ENOUGH_ARGUMENTS = -5;
 static const int ERR_CODE_ALLOCCING_MEMORY = -6;
 static const int ERR_CODE_OPEN_FILE = -7;
-static const int ERR_CODE_OPEN_SEMAPHORE = -8;
+static const int ERR_CODE_SEMAPHORE = -8;
 static const int ERR_CODE_THREAD = -2;
 static const int ERR_CODE_CREAT_THEARD = -3;
 static const int ERR_CODE_CLOSE_THREAD = -4;
