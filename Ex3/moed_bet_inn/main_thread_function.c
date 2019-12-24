@@ -30,7 +30,7 @@ int main_thread_function(main_thread_params *p_main_thread_params) {
 
 		//}
 
-		Sleep(1000);
+		Sleep(10000);
 		HANDLE days_mutex_handle = OpenMutex(SYNCHRONIZE, FALSE, MUTEX_DAYS_NAME);
 		DWORD wait_code;
 		wait_code = WaitForSingleObject(days_mutex_handle, INFINITE);
@@ -38,12 +38,16 @@ int main_thread_function(main_thread_params *p_main_thread_params) {
 			printf("Error when open mutex\n");
 			return ERR_CODE_MUTEX;
 		}
-		p_main_thread_params->p_days = *p_main_thread_params->p_days + 1;
+		printf("day %d\n", *(p_main_thread_params->p_days));
+		*(p_main_thread_params->p_days) = *(p_main_thread_params->p_days) + 1;
 		BOOL ret_val;
 		ret_val = ReleaseMutex(days_mutex_handle);
 		if (ret_val == FALSE) {
 			printf("Error when releasing\n");
 			return ERR_CODE_MUTEX;
+		}
+		if (*(p_main_thread_params->p_exits_residents) == p_main_thread_params->residents_num) {
+			break;
 		}
 	}
 }

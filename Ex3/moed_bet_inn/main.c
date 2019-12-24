@@ -40,14 +40,15 @@ int main(int argc, char *argv[]) {
 		return_code = ERR_CODE_MUTEX;
 		goto SKIP;
 	}
-	HANDLE file_mutex_handle = CreateMutex(NULL, FALSE, MUTEX_BOOKLOG_FILE_NAME);
+	HANDLE file_mutex_handle = CreateMutex(NULL, FALSE, MUTEX_ROOMLOG_FILE_NAME);
 	if (file_mutex_handle == NULL) {
 		printf("error when creating mutex", GetLastError());
 		return_code = ERR_CODE_MUTEX;
 		goto SKIP;
 	}
-	int *rooms_num = 0;
-	int *residents_num = 0;
+	int rooms_num = 0;
+	int residents_num = 0;
+	int exits_residents = 0;
 	ROOM *p_rooms;	// array for room struct
 	p_rooms = (ROOM *)calloc(MAX_ROOM_NUM, sizeof(ROOM)); // allocate memory for room parameters
 	if (NULL == p_rooms) {			// cheack if memery allocation was successful
@@ -76,11 +77,12 @@ int main(int argc, char *argv[]) {
 	HANDLE p_main_thread_handle = NULL;
 	DWORD p_main_thread_id = NULL;
 	main_thread_params *p_main_thread_params;
-	p_main_thread_params = (main_thread_params *)malloc(sizeof(main_thread_params));
-	initialization_p_main_thread_params(p_residents, p_rooms, *p_main_thread_params, residents_num, &days);
+	p_main_thread_params = (main_thread_params *)calloc(1,sizeof(main_thread_params));
+	initialization_p_main_thread_params(p_residents, p_rooms, p_main_thread_params, residents_num, &days, &exits_residents);
 	return_code = create_main_thread(p_main_thread_handle,p_main_thread_id, p_main_thread_params);
-	initialization_p_resident_thread_params(main_folder_path, p_residents, p_rooms, p_resident_thread_params, residents_num,&days);
+	initialization_p_resident_thread_params(main_folder_path, p_residents, p_rooms, p_resident_thread_params, residents_num,&days,&exits_residents);
 	return_code = create_resident_threads(p_resident_thread_handles, p_thread_ids,residents_num,p_resident_thread_params);
+	return_code = terminate_main_thread(p_main_thread_handle, p_main_thread_id, p_main_thread_params);
 SKIP:
 	//printf(days);
 	return return_code;

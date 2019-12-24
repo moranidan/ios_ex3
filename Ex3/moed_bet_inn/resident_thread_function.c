@@ -25,21 +25,22 @@ DWORD WINAPI resident_enter_thread(LPVOID lpParam)
 
 int thread_function(resident_thread_params *p_resident_thread_params) {
 	int return_code = ERR_CODE_DEFAULT;
-	FILE *pf_booklog;
+	FILE *pf_roomlog;
 	ROOM *p_rooms = p_resident_thread_params->p_rooms;
 	RESIDENT *p_resident = &(p_resident_thread_params->p_resident);
 	DWORD wait_res;
 	DWORD release_res;
 	HANDLE days_mutex_handle = OpenMutex(SYNCHRONIZE, FALSE, MUTEX_DAYS_NAME);
-	HANDLE file_mutex_handle = OpenMutex(SYNCHRONIZE, FALSE, MUTEX_BOOKLOG_FILE_NAME);
+	HANDLE file_mutex_handle = OpenMutex(SYNCHRONIZE, FALSE, MUTEX_ROOMLOG_FILE_NAME);
 	DWORD wait_code;
 	BOOL ret_val;
 	char *file_path;
-	file_path = (char *)malloc((strlen(p_resident_thread_params->main_folder_path) + BOOKLOG_FILE_ADDRESS_LEN) * sizeof(char));
-	strcpy_s(file_path, sizeof(file_path), p_resident_thread_params->main_folder_path);
-	strcat_s(file_path, sizeof(file_path), FILE_NAME_BOOK_LOG);
-	fopen_s(&pf_booklog, file_path, "a");
-	if (pf_booklog = NULL) {
+	int file_path_len = strlen(p_resident_thread_params->main_folder_path) + BOOKLOG_FILE_ADDRESS_LEN;
+	file_path = (char *)malloc(file_path_len * sizeof(char));
+	strcpy_s(file_path, file_path_len, p_resident_thread_params->main_folder_path);
+	strcat_s(file_path, file_path_len, FILE_NAME_BOOK_LOG);
+	fopen_s(&pf_roomlog, file_path, "a");
+	if (pf_roomlog = NULL) {
 		printf("cannot open BookLog file");
 		return_code =  ERR_CODE_OPEN_FILE;
 		goto RELEASE_MEMORY;
@@ -72,7 +73,7 @@ int thread_function(resident_thread_params *p_resident_thread_params) {
 		return_code = ERR_CODE_MUTEX;
 		goto CLOSE_FILE_AND_RELEASE_MEMORY;
 	}
-	fprintf(pf_booklog,"%s %s IN %d\n", p_rooms[p_resident->my_room_num].name, p_resident->name, day_in);
+	fprintf(pf_roomlog,"%s %s IN %d\n", p_rooms[p_resident->my_room_num].name, p_resident->name, day_in);
 	//free mutex on pf_booklog
 	ret_val = ReleaseMutex(file_mutex_handle);
 	if (ret_val == FALSE) {
@@ -104,7 +105,7 @@ int thread_function(resident_thread_params *p_resident_thread_params) {
 				return_code = ERR_CODE_MUTEX;
 				goto CLOSE_FILE_AND_RELEASE_MEMORY;
 			}
-			fprintf(pf_booklog, "%s %s OUT %d\n", p_rooms[p_resident->my_room_num].name, p_resident->name, day_out);
+			fprintf(pf_roomlog, "%s %s OUT %d\n", p_rooms[p_resident->my_room_num].name, p_resident->name, day_out);
 			//free mutex on pf_booklog
 			ret_val = ReleaseMutex(file_mutex_handle);
 			if (ret_val == FALSE) {
@@ -112,6 +113,7 @@ int thread_function(resident_thread_params *p_resident_thread_params) {
 				return_code = ERR_CODE_MUTEX;
 				goto CLOSE_FILE_AND_RELEASE_MEMORY;
 			}
+			*(p_resident_thread_params->p_exits_residents) = *(p_resident_thread_params->p_exits_residents) + 1;
 			release_res = ReleaseSemaphore(
 				p_rooms[p_resident->my_room_num].room_full,
 				1, 		/* Signal that exactly one cell was filled */
@@ -134,7 +136,7 @@ int thread_function(resident_thread_params *p_resident_thread_params) {
 		}
 	}
 	CLOSE_FILE_AND_RELEASE_MEMORY:
-	fclose(pf_booklog);
+	fclose(pf_roomlog);
 	RELEASE_MEMORY:
 	free(file_path);
 	return return_code;

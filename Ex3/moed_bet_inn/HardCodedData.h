@@ -21,7 +21,7 @@
 #define ENTER_ROOM " IN "
 #define EXIT_ROOM " OUT "
 static LPCTSTR MUTEX_DAYS_NAME = _T("moed_bet_inn_days_mutex");
-static LPCTSTR MUTEX_BOOKLOG_FILE_NAME = _T("moed_bet_inn_booklog_file_mutex");
+static LPCTSTR MUTEX_ROOMLOG_FILE_NAME = _T("moed_bet_inn_rooklog_file_mutex");
 static const int ERR_CODE_DEFAULT = 0;
 static const int ERR_CODE_NOT_ENOUGH_ARGUMENTS = -5;
 static const int ERR_CODE_ALLOCCING_MEMORY = -6;
