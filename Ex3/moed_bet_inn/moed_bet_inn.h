@@ -36,6 +36,7 @@ typedef struct
 	char *main_folder_path;
 	int *p_days;
 	int *p_exits_residents;
+	FILE *pf_roomlog;
 } resident_thread_params;
 
 typedef struct  //TODO
@@ -52,9 +53,9 @@ typedef struct  //TODO
 // Function Declarations -------------------------------------------------------
 int initialization_names(char *main_folder_path, RESIDENT *p_residents, ROOM *p_rooms, int rooms_num, int *residents_num);
 int initialization_rooms(char *main_folder_path, ROOM *p_rooms, int *rooms_num);
-void initialization_p_resident_thread_params(char *main_folder_path, RESIDENT *p_residents, ROOM *p_rooms, resident_thread_params *p_resident_thread_params, int residents_num, int days, int exits_residents); void initialization_p_main_thread_params(RESIDENT *p_residents, ROOM *p_rooms, main_thread_params *p_main_thread_params, int residents_num, int *days);
-int create_resident_threads(HANDLE *p_resident_thread_handles, DWORD *p_thread_ids, int *residents_num, resident_thread_params *p_params);
+void initialization_p_resident_thread_params(char *main_folder_path, RESIDENT *p_residents, ROOM *p_rooms, resident_thread_params *p_resident_thread_params, int residents_num, int days, int exits_residents, FILE *pf_roomlog); int create_resident_threads(HANDLE *p_resident_thread_handles, DWORD *p_thread_ids, int *residents_num, resident_thread_params *p_params);
 int create_main_thread(HANDLE *p_main_thread_handle, DWORD *p_main_thread_id, main_thread_params *p_main_thread_params);
+int open_roomLog_file(char *main_folder_path, FILE *pf_roomlog);
 static HANDLE CreateThreadSimple(LPTHREAD_START_ROUTINE p_start_routine,LPVOID p_thread_parameters,LPDWORD p_thread_id);
 int terminate_main_thread(HANDLE *p_main_thread_handle, DWORD *p_main_thread_id, main_thread_params *p_main_thread_params);
 DWORD WINAPI Promote_days(LPVOID lpParam);

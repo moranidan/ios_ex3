@@ -24,39 +24,30 @@ DWORD WINAPI resident_enter_thread(LPVOID lpParam)
 }
 
 int thread_function(resident_thread_params *p_resident_thread_params) {
+	char *name = p_resident_thread_params->p_resident.name;
 	int return_code = ERR_CODE_DEFAULT;
-	FILE *pf_roomlog;
 	ROOM *p_rooms = p_resident_thread_params->p_rooms;
 	RESIDENT *p_resident = &(p_resident_thread_params->p_resident);
 	DWORD wait_res;
 	DWORD release_res;
 	HANDLE days_mutex_handle = OpenMutex(SYNCHRONIZE, FALSE, MUTEX_DAYS_NAME);
 	HANDLE file_mutex_handle = OpenMutex(SYNCHRONIZE, FALSE, MUTEX_ROOMLOG_FILE_NAME);
+	HANDLE exit_residents_mutex_handle = OpenMutex(SYNCHRONIZE, FALSE, MUTEX_EXIT_RESIDENTS);
 	DWORD wait_code;
 	BOOL ret_val;
-	char *file_path;
-	int file_path_len = strlen(p_resident_thread_params->main_folder_path) + BOOKLOG_FILE_ADDRESS_LEN;
-	file_path = (char *)malloc(file_path_len * sizeof(char));
-	strcpy_s(file_path, file_path_len, p_resident_thread_params->main_folder_path);
-	strcat_s(file_path, file_path_len, FILE_NAME_BOOK_LOG);
-	fopen_s(&pf_roomlog, file_path, "a");
-	if (pf_roomlog = NULL) {
-		printf("cannot open BookLog file");
-		return_code =  ERR_CODE_OPEN_FILE;
-		goto RELEASE_MEMORY;
-	}
 	wait_res = WaitForSingleObject(p_rooms[p_resident->my_room_num].room_full, INFINITE);
 	if (wait_res != WAIT_OBJECT_0) {
 		printf("Error when wait to semaphore\n");
 		return_code =  ERR_CODE_SEMAPHORE;
-		goto CLOSE_FILE_AND_RELEASE_MEMORY;
+		goto ERROR_OCCURRED;
 	}
+	char *name2 = p_resident_thread_params->p_resident.name;
 	//lock mutex on days
 	wait_code = WaitForSingleObject(days_mutex_handle, INFINITE);
 	if (wait_code != WAIT_OBJECT_0) {
 		printf("Error when open mutex\n");
 		return_code = ERR_CODE_MUTEX;
-		goto CLOSE_FILE_AND_RELEASE_MEMORY;
+		goto ERROR_OCCURRED;
 	}
 	int *day_in = p_resident_thread_params->p_days;
 	//free mutex on days
@@ -64,22 +55,24 @@ int thread_function(resident_thread_params *p_resident_thread_params) {
 	if (ret_val == FALSE) {
 		printf("Error when releasing\n");
 		return_code = ERR_CODE_MUTEX;
-		goto CLOSE_FILE_AND_RELEASE_MEMORY;
+		goto ERROR_OCCURRED;
 	}
+
+
 	//lock mutex on pf_booklog
 	wait_code = WaitForSingleObject(file_mutex_handle, INFINITE);
 	if (wait_code != WAIT_OBJECT_0) {
 		printf("Error when open mutex\n");
 		return_code = ERR_CODE_MUTEX;
-		goto CLOSE_FILE_AND_RELEASE_MEMORY;
+		goto ERROR_OCCURRED;
 	}
-	fprintf(pf_roomlog,"%s %s IN %d\n", p_rooms[p_resident->my_room_num].name, p_resident->name, day_in);
+	fprintf(p_resident_thread_params->pf_roomlog,"%s %s IN %d\n", p_rooms[p_resident->my_room_num].name, p_resident->name, *day_in);
 	//free mutex on pf_booklog
 	ret_val = ReleaseMutex(file_mutex_handle);
 	if (ret_val == FALSE) {
 		printf("Error when releasing\n");
 		return_code = ERR_CODE_MUTEX;
-		goto CLOSE_FILE_AND_RELEASE_MEMORY;
+		goto ERROR_OCCURRED;
 	}
 	int day_out = *day_in + p_resident->room_days;
 	while (TRUE) {
@@ -88,32 +81,48 @@ int thread_function(resident_thread_params *p_resident_thread_params) {
 		if (wait_code != WAIT_OBJECT_0) {
 			printf("Error when open mutex\n");
 			return_code = ERR_CODE_MUTEX;
-			goto CLOSE_FILE_AND_RELEASE_MEMORY;
+			goto ERROR_OCCURRED;
 		}
-		if (p_resident_thread_params->p_days == day_out) {
+		if (*(p_resident_thread_params->p_days) == day_out) {
+
 			//free mutex on days
 			ret_val = ReleaseMutex(days_mutex_handle);
 			if (ret_val == FALSE) {
 				printf("Error when releasing\n");
 				return_code = ERR_CODE_MUTEX;
-				goto CLOSE_FILE_AND_RELEASE_MEMORY;
+				goto ERROR_OCCURRED;
 			}
 			//lock mutex on pf_booklog
 			wait_code = WaitForSingleObject(file_mutex_handle, INFINITE);
 			if (wait_code != WAIT_OBJECT_0) {
 				printf("Error when open mutex\n");
 				return_code = ERR_CODE_MUTEX;
-				goto CLOSE_FILE_AND_RELEASE_MEMORY;
+				goto ERROR_OCCURRED;
 			}
-			fprintf(pf_roomlog, "%s %s OUT %d\n", p_rooms[p_resident->my_room_num].name, p_resident->name, day_out);
+			fprintf(p_resident_thread_params->pf_roomlog, "%s %s OUT %d\n", p_rooms[p_resident->my_room_num].name, p_resident->name, day_out);
 			//free mutex on pf_booklog
 			ret_val = ReleaseMutex(file_mutex_handle);
 			if (ret_val == FALSE) {
 				printf("Error when releasing\n");
 				return_code = ERR_CODE_MUTEX;
-				goto CLOSE_FILE_AND_RELEASE_MEMORY;
+				goto ERROR_OCCURRED;
 			}
-			*(p_resident_thread_params->p_exits_residents) = *(p_resident_thread_params->p_exits_residents) + 1;
+			//lock mutex on exit residents
+			wait_code = WaitForSingleObject(exit_residents_mutex_handle, INFINITE);
+			if (wait_code != WAIT_OBJECT_0) {
+				printf("Error when open mutex\n");
+				return_code = ERR_CODE_MUTEX;
+				goto ERROR_OCCURRED;
+			}
+			int already_entered = *(p_resident_thread_params->p_exits_residents) + 1;
+			*(p_resident_thread_params->p_exits_residents) = already_entered;
+			//free mutex on exit residents
+			ret_val = ReleaseMutex(exit_residents_mutex_handle);
+			if (ret_val == FALSE) {
+				printf("Error when releasing\n");
+				return_code = ERR_CODE_MUTEX;
+				goto ERROR_OCCURRED;
+			}
 			release_res = ReleaseSemaphore(
 				p_rooms[p_resident->my_room_num].room_full,
 				1, 		/* Signal that exactly one cell was filled */
@@ -121,7 +130,7 @@ int thread_function(resident_thread_params *p_resident_thread_params) {
 			if (release_res == FALSE) {
 				printf("Error when releasing\n");
 				return_code = ERR_CODE_SEMAPHORE;
-				goto CLOSE_FILE_AND_RELEASE_MEMORY;
+				goto ERROR_OCCURRED;
 			}
 			break;
 		}
@@ -131,13 +140,10 @@ int thread_function(resident_thread_params *p_resident_thread_params) {
 			if (ret_val == FALSE) {
 				printf("Error when releasing\n");
 				return_code =  ERR_CODE_MUTEX;
-				goto CLOSE_FILE_AND_RELEASE_MEMORY;
+				goto ERROR_OCCURRED;
 			}
 		}
 	}
-	CLOSE_FILE_AND_RELEASE_MEMORY:
-	fclose(pf_roomlog);
-	RELEASE_MEMORY:
-	free(file_path);
+ERROR_OCCURRED:
 	return return_code;
 }

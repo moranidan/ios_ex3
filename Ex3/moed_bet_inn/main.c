@@ -21,19 +21,27 @@ Description - This project TODO
 
 int main(int argc, char *argv[]) {
 	int return_code = ERR_CODE_DEFAULT;
-	char *main_folder_path;
-	main_folder_path = (char *)malloc((strlen(argv[1])+1) * sizeof(char));
-	strcpy_s(main_folder_path, (strlen(argv[1])+1), argv[1]);
 	if (argc < 2) {    //check if there are enough arguments
 		printf("No folder name entered");
 		return_code = ERR_CODE_NOT_ENOUGH_ARGUMENTS;
+		return return_code;
 	}
+	char *main_folder_path;
+	main_folder_path = (char *)malloc((strlen(argv[1])+1) * sizeof(char));
 	if (NULL == main_folder_path) {		// check for error when allocating memory
 		printf("Error when allocating memory");
 		return_code = ERR_CODE_ALLOCCING_MEMORY;
-		goto SKIP;
+		return return_code;
 	}
-	int days = 0;
+	strcpy_s(main_folder_path, (strlen(argv[1])+1), argv[1]);
+	FILE *pf_roomlog = NULL;
+	return_code = open_roomLog_file(main_folder_path, &pf_roomlog);
+	if (return_code != ERR_CODE_DEFAULT) {
+		free(main_folder_path);
+		return return_code;
+	}
+	int days = 1;
+
 	HANDLE days_mutex_handle = CreateMutex(NULL, FALSE, MUTEX_DAYS_NAME);
 	if (days_mutex_handle == NULL) {
 		printf("error when creating mutex", GetLastError());
@@ -46,6 +54,13 @@ int main(int argc, char *argv[]) {
 		return_code = ERR_CODE_MUTEX;
 		goto SKIP;
 	}
+	HANDLE exit_residents_mutex_handle = CreateMutex(NULL, FALSE, MUTEX_EXIT_RESIDENTS);
+	if (exit_residents_mutex_handle == NULL) {
+		printf("error when creating mutex", GetLastError());
+		return_code = ERR_CODE_MUTEX;
+		goto SKIP;
+	}
+
 	int rooms_num = 0;
 	int residents_num = 0;
 	int exits_residents = 0;
@@ -79,11 +94,13 @@ int main(int argc, char *argv[]) {
 	main_thread_params *p_main_thread_params;
 	p_main_thread_params = (main_thread_params *)calloc(1,sizeof(main_thread_params));
 	initialization_p_main_thread_params(p_residents, p_rooms, p_main_thread_params, residents_num, &days, &exits_residents);
-	return_code = create_main_thread(p_main_thread_handle,p_main_thread_id, p_main_thread_params);
-	initialization_p_resident_thread_params(main_folder_path, p_residents, p_rooms, p_resident_thread_params, residents_num,&days,&exits_residents);
-	return_code = create_resident_threads(p_resident_thread_handles, p_thread_ids,residents_num,p_resident_thread_params);
-	return_code = terminate_main_thread(p_main_thread_handle, p_main_thread_id, p_main_thread_params);
+	return_code = create_main_thread(&p_main_thread_handle,p_main_thread_id, p_main_thread_params);
+	initialization_p_resident_thread_params(main_folder_path, p_residents, p_rooms, p_resident_thread_params, residents_num,&days,&exits_residents, pf_roomlog);
+	return_code = create_resident_threads(p_resident_thread_handles, p_thread_ids,&residents_num,p_resident_thread_params);
+	return_code = terminate_main_thread(&p_main_thread_handle, p_main_thread_id, p_main_thread_params);
+	printf("Total days: %d\n", days-1);
 SKIP:
-	//printf(days);
+	free(main_folder_path);
+	fclose(pf_roomlog);
 	return return_code;
 }

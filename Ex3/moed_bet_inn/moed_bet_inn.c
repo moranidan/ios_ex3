@@ -31,9 +31,9 @@ int initialization_names(char *main_folder_path, RESIDENT *p_residents, ROOM *p_
 		char *str_my_budget = strtok(NULL, delim);
 		p_residents[i].my_budget = atoi(str_my_budget);
 		for (int j = 0; j < rooms_num; j++) {
-			if (p_residents->my_budget % p_rooms[j].price_per_night == 0) {
-				p_residents->my_room_num = j;
-				p_residents->room_days = p_residents->my_budget / p_rooms[j].price_per_night;
+			if (p_residents[i].my_budget % p_rooms[j].price_per_night == 0) {
+				p_residents[i].my_room_num = j;
+				p_residents[i].room_days = p_residents[i].my_budget / p_rooms[j].price_per_night;
 			}
 		}
 		i += 1;
@@ -67,7 +67,7 @@ int initialization_rooms(char *main_folder_path, ROOM *p_rooms,int *rooms_num) {
 		static HANDLE room_full;
 		room_full = CreateSemaphore(
 			NULL,	/* Default security attributes */
-			0,		/* Initial Count - no slots are full */
+			p_rooms[i].nums_of_same_room,		/* Initial Count - no slots are full */
 			p_rooms[i].nums_of_same_room,		/* Maximum Count */
 			NULL); /* un-named */
 
@@ -82,13 +82,14 @@ int initialization_rooms(char *main_folder_path, ROOM *p_rooms,int *rooms_num) {
 	return ERR_CODE_DEFAULT;
 }
 
-void initialization_p_resident_thread_params(char *main_folder_path,RESIDENT *p_residents,ROOM *p_rooms,resident_thread_params *p_resident_thread_params,int residents_num, int days, int exits_residents) {
+void initialization_p_resident_thread_params(char *main_folder_path,RESIDENT *p_residents,ROOM *p_rooms,resident_thread_params *p_resident_thread_params,int residents_num, int days, int *exits_residents, FILE *pf_roomlog) {
 	for (int i = 0; i < residents_num; i++) {
 		p_resident_thread_params[i].main_folder_path = main_folder_path;
 		p_resident_thread_params[i].p_resident = p_residents[i];
 		p_resident_thread_params[i].p_rooms = p_rooms;
-		p_resident_thread_params[i].p_days = &days;
-		p_resident_thread_params[i].p_exits_residents = &exits_residents;
+		p_resident_thread_params[i].p_days = days;
+		p_resident_thread_params[i].p_exits_residents = exits_residents;
+		p_resident_thread_params[i].pf_roomlog = pf_roomlog;
 	}
 }
 
@@ -100,13 +101,33 @@ void initialization_p_main_thread_params(RESIDENT *p_residents, ROOM *p_rooms, m
 	p_main_thread_params->p_exits_residents = exits_residents;
 }
 
+int open_roomLog_file(char *main_folder_path, FILE **pf_roomlog) {
+	char *file_path;
+	int file_path_len = strlen(main_folder_path) + BOOKLOG_FILE_ADDRESS_LEN;
+	file_path = (char *)malloc(file_path_len * sizeof(char));
+	if (NULL == file_path) {		// check for error when allocating memory
+		printf("Error when allocating memory");
+		return ERR_CODE_ALLOCCING_MEMORY;
+	}
+	strcpy_s(file_path, file_path_len, main_folder_path);
+	strcat_s(file_path, file_path_len, FILE_NAME_BOOK_LOG);
+	fopen_s(pf_roomlog, file_path, "a");
+	if (*pf_roomlog == NULL) {
+		printf("cannot open BookLog file");
+		free(file_path);
+		return ERR_CODE_OPEN_FILE;
+	}
+	free(file_path);
+	return ERR_CODE_DEFAULT;
+}
+
 //create threads functions -----------------------------------------------------------------------------------------
 
-int create_resident_threads(HANDLE *p_resident_thread_handles, DWORD *p_thread_ids, int *residents_num,resident_thread_params *p_resident_thread_params){
+int create_resident_threads(HANDLE *p_resident_thread_handles, DWORD *p_thread_ids, int *residents_num, resident_thread_params *p_resident_thread_params){
 	int return_code = ERR_CODE_DEFAULT;		// if everything works properly err code default will be returned
 	BOOL ret_val;
 
-	for (int i = 0; i < residents_num; i++)			// create thread for every resident
+	for (int i = 0; i < *residents_num; i++)			// create thread for every resident
 	{
 		p_resident_thread_handles[i] = CreateThreadSimple(resident_enter_thread, &p_resident_thread_params[i], &p_thread_ids[i]);	// create thread
 		if (NULL == p_resident_thread_handles[i])	// check for errors
@@ -126,15 +147,23 @@ int create_resident_threads(HANDLE *p_resident_thread_handles, DWORD *p_thread_i
 
 	DWORD wait_code;
 
-	wait_code = WaitForMultipleObjects(residents_num, p_resident_thread_handles, TRUE, INFINITE);	// wait for threads to run
+	wait_code = WaitForMultipleObjects(*residents_num, p_resident_thread_handles, TRUE, INFINITE);	// wait for threads to run
 	if (WAIT_OBJECT_0 != wait_code)			// check for errors
 	{
-		printf("Error when waiting\n");
+		printf("Error when waiting: %d\n", wait_code);
 		return_code = ERR_CODE_THREAD;
 	}
 	
-	for (int j = 0; j < residents_num; j++)	// loop for  closing threads handles
+	LPDWORD thread_exit_code = 0;
+	for (int j = 0; j < *residents_num; j++)	// loop for  closing threads handles
 	{
+		if (GetExitCodeThread(p_resident_thread_handles[j], &thread_exit_code) == 0) {
+			printf("Error when trying to get threads exit code");
+			return_code = ERR_CODE_THREAD;
+		}
+		if (thread_exit_code != ERR_CODE_DEFAULT) {
+			return_code = ERR_CODE_THREAD;
+		}
 		ret_val = CloseHandle(p_resident_thread_handles[j]);
 		if (FALSE == ret_val)
 		{
@@ -145,33 +174,31 @@ int create_resident_threads(HANDLE *p_resident_thread_handles, DWORD *p_thread_i
 	return return_code;
 }
 
-int create_main_thread(HANDLE *p_main_thread_handle, DWORD *p_main_thread_id, main_thread_params *p_main_thread_params) {
+int create_main_thread(HANDLE **p_main_thread_handle, DWORD *p_main_thread_id, main_thread_params *p_main_thread_params) {
 	int return_code = ERR_CODE_DEFAULT;		// if everything works properly err code default will be returned
 	BOOL ret_val;
-	p_main_thread_handle = CreateThreadSimple(Promote_days,p_main_thread_params ,&p_main_thread_id);	// create thread
-	if (NULL == p_main_thread_handle)	// check for errors
+	*p_main_thread_handle = CreateThreadSimple(Promote_days,p_main_thread_params ,&p_main_thread_id);	// create thread
+	if (NULL == *p_main_thread_handle)	// check for errors
 		{
 		printf("Error when creating main thread: %d\n", GetLastError());
 		return_code = ERR_CODE_CREAT_THEARD;
 		return return_code;		// return immediately before creating more threads
 	}
-
-
 	return return_code;
 }
 
-int terminate_main_thread(HANDLE *p_main_thread_handle, DWORD *p_main_thread_id, main_thread_params *p_main_thread_params) {
+int terminate_main_thread(HANDLE **p_main_thread_handle, DWORD *p_main_thread_id, main_thread_params *p_main_thread_params) {
 	int return_code = ERR_CODE_DEFAULT;
 	DWORD wait_code;
 	BOOL ret_val;
-	wait_code = WaitForSingleObject(p_main_thread_handle, INFINITE);	// wait for threads to run
+	wait_code = WaitForSingleObject(*p_main_thread_handle, INFINITE);	// wait for threads to run
 	if (WAIT_OBJECT_0 != wait_code)			// check for errors
 	{
 		printf("Error when waiting\n");
 		return_code = ERR_CODE_THREAD;
 	}
 
-	ret_val = CloseHandle(p_main_thread_handle);
+	ret_val = CloseHandle(*p_main_thread_handle);
 	if (FALSE == ret_val)
 	{
 		printf("Error when closing thread: %d\n", GetLastError());

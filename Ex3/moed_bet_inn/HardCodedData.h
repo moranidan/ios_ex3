@@ -15,13 +15,14 @@
 #define THREAD_TIMEOUT_IN_MILLISECONDS 5000
 #define BRUTAL_TERMINATION_CODE 0x55
 #define BOOKLOG_FILE_ADDRESS_LEN 14
-#define FILE_NAME_RESIDENTS_NAMES "/names.txt"
-#define FILE_NAME_ROOMS_NAMES "/rooms.txt"
-#define FILE_NAME_BOOK_LOG "/roomLog.txt"
+#define FILE_NAME_RESIDENTS_NAMES "\\names.txt"
+#define FILE_NAME_ROOMS_NAMES "\\rooms.txt"
+#define FILE_NAME_BOOK_LOG "\\roomLog.txt"
 #define ENTER_ROOM " IN "
 #define EXIT_ROOM " OUT "
 static LPCTSTR MUTEX_DAYS_NAME = _T("moed_bet_inn_days_mutex");
-static LPCTSTR MUTEX_ROOMLOG_FILE_NAME = _T("moed_bet_inn_rooklog_file_mutex");
+static LPCTSTR MUTEX_ROOMLOG_FILE_NAME = _T("moed_bet_inn_roomlog_file_mutex");
+static LPCTSTR MUTEX_EXIT_RESIDENTS = _T("moed_bet_inn_exit_residents_mutex");
 static const int ERR_CODE_DEFAULT = 0;
 static const int ERR_CODE_NOT_ENOUGH_ARGUMENTS = -5;
 static const int ERR_CODE_ALLOCCING_MEMORY = -6;

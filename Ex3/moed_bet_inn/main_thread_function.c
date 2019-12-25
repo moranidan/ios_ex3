@@ -30,15 +30,15 @@ int main_thread_function(main_thread_params *p_main_thread_params) {
 
 		//}
 
-		Sleep(10000);
+		Sleep(1000);
 		HANDLE days_mutex_handle = OpenMutex(SYNCHRONIZE, FALSE, MUTEX_DAYS_NAME);
+		HANDLE exit_residents_mutex_handle = OpenMutex(SYNCHRONIZE, FALSE, MUTEX_EXIT_RESIDENTS);
 		DWORD wait_code;
 		wait_code = WaitForSingleObject(days_mutex_handle, INFINITE);
 		if (wait_code != WAIT_OBJECT_0) {
 			printf("Error when open mutex\n");
 			return ERR_CODE_MUTEX;
 		}
-		printf("day %d\n", *(p_main_thread_params->p_days));
 		*(p_main_thread_params->p_days) = *(p_main_thread_params->p_days) + 1;
 		BOOL ret_val;
 		ret_val = ReleaseMutex(days_mutex_handle);
@@ -46,8 +46,27 @@ int main_thread_function(main_thread_params *p_main_thread_params) {
 			printf("Error when releasing\n");
 			return ERR_CODE_MUTEX;
 		}
+
+		//lock mutex on exit residents
+		wait_code = WaitForSingleObject(exit_residents_mutex_handle, INFINITE);
+		if (wait_code != WAIT_OBJECT_0) {
+			printf("Error when open mutex\n");
+			return ERR_CODE_MUTEX;
+		}
 		if (*(p_main_thread_params->p_exits_residents) == p_main_thread_params->residents_num) {
+			//free mutex on exit residents
+			ret_val = ReleaseMutex(exit_residents_mutex_handle);
+			if (ret_val == FALSE) {
+				printf("Error when releasing\n");
+				return ERR_CODE_MUTEX;
+			}
 			break;
+		}
+		//free mutex on exit residents
+		ret_val = ReleaseMutex(exit_residents_mutex_handle);
+		if (ret_val == FALSE) {
+			printf("Error when releasing\n");
+			return ERR_CODE_MUTEX;
 		}
 	}
 }
