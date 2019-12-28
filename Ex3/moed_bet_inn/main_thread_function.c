@@ -24,49 +24,55 @@ DWORD WINAPI Promote_days(LPVOID lpParam)
 }
 
 int main_thread_function(main_thread_params *p_main_thread_params) {
+	int return_code = ERR_CODE_DEFAULT;
+
+	// open mutexes
+	HANDLE days_mutex_handle = NULL;
+	if (open_and_check_mutex(&days_mutex_handle, SYNCHRONIZE, FALSE, MUTEX_DAYS_NAME, &return_code) != ERR_CODE_DEFAULT) {
+		return ERR_CODE_MUTEX;
+	}
+	HANDLE exit_residents_mutex_handle = NULL;
+	if (open_and_check_mutex(&exit_residents_mutex_handle, SYNCHRONIZE, FALSE, MUTEX_EXIT_RESIDENTS, &return_code) != ERR_CODE_DEFAULT) {
+		close_handle(days_mutex_handle);
+		return ERR_CODE_MUTEX;
+	}
+
 	while (TRUE)
 	{
-		//for (int i; i < (p_main_thread_params->residents_num); i++) {
+		Sleep(200);
 
-		//}
-
-		Sleep(1000);
-		HANDLE days_mutex_handle = OpenMutex(SYNCHRONIZE, FALSE, MUTEX_DAYS_NAME);
-		HANDLE exit_residents_mutex_handle = OpenMutex(SYNCHRONIZE, FALSE, MUTEX_EXIT_RESIDENTS);
-		DWORD wait_code;
-		wait_code = WaitForSingleObject(days_mutex_handle, INFINITE);
-		if (wait_code != WAIT_OBJECT_0) {
-			printf("Error when open mutex\n");
-			return ERR_CODE_MUTEX;
-		}
-		*(p_main_thread_params->p_days) = *(p_main_thread_params->p_days) + 1;
-		BOOL ret_val;
-		ret_val = ReleaseMutex(days_mutex_handle);
-		if (ret_val == FALSE) {
-			printf("Error when releasing\n");
-			return ERR_CODE_MUTEX;
-		}
-
-		//lock mutex on exit residents
-		wait_code = WaitForSingleObject(exit_residents_mutex_handle, INFINITE);
-		if (wait_code != WAIT_OBJECT_0) {
-			printf("Error when open mutex\n");
-			return ERR_CODE_MUTEX;
-		}
-		if (*(p_main_thread_params->p_exits_residents) == p_main_thread_params->residents_num) {
-			//free mutex on exit residents
-			ret_val = ReleaseMutex(exit_residents_mutex_handle);
-			if (ret_val == FALSE) {
-				printf("Error when releasing\n");
-				return ERR_CODE_MUTEX;
-			}
+		// lock days mutex
+		if (lock_mutex(&days_mutex_handle, &return_code) != ERR_CODE_DEFAULT) {
 			break;
 		}
-		//free mutex on exit residents
-		ret_val = ReleaseMutex(exit_residents_mutex_handle);
-		if (ret_val == FALSE) {
-			printf("Error when releasing\n");
-			return ERR_CODE_MUTEX;
+
+		// critical zone
+		*(p_main_thread_params->p_days) = *(p_main_thread_params->p_days) + 1;
+
+		// release days mutex
+		if (release_mutex(&days_mutex_handle, &return_code) != ERR_CODE_DEFAULT) {
+			break;
+		}
+
+		Sleep(200);
+
+		// lock exit_residents mutex
+		if (lock_mutex(&exit_residents_mutex_handle, &return_code) != ERR_CODE_DEFAULT) {
+			break;
+		}
+
+		//critical zone
+		if (*(p_main_thread_params->p_exits_residents) == p_main_thread_params->residents_num) {
+			// release mutex on exit residents
+			release_mutex(&exit_residents_mutex_handle, &return_code);
+			break;
+		}
+		//release mutex on exit residents
+		if (release_mutex(&exit_residents_mutex_handle, &return_code) != ERR_CODE_DEFAULT) {
+			break;
 		}
 	}
+	close_handle(days_mutex_handle);
+	close_handle(exit_residents_mutex_handle);
+	return return_code;
 }

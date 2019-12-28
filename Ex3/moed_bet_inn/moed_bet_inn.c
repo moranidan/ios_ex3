@@ -8,6 +8,7 @@
 #pragma warning(disable:4996) // in order to avoid warning about fopen being unsafe function.
 //#define _CRT_SECURE_NO_WARNINGS /* to suppress compiler warnings (VS 2010 ) */
 
+
 // Function Definitions --------------------------------------------------------
 int initialization_names(char *main_folder_path, RESIDENT *p_residents, ROOM *p_rooms, int rooms_num, int *residents_num) {
 	FILE *pfl_names = NULL;
@@ -15,12 +16,16 @@ int initialization_names(char *main_folder_path, RESIDENT *p_residents, ROOM *p_
 	int path_len = strlen(main_folder_path) + LEN_FILE_NAME_RESIDENTS_NAMES;
 	char line[MAX_LINE_LENGTH] = "\0";
 	file_path = (char *)malloc(path_len * sizeof(char));
-	//char name[MAX_NAME_INPUT] = "\0";
+	if (file_path == NULL) {			// cheack if memery allocation was successful
+		printf("Error when allocating memory");
+		return ERR_CODE_ALLOCCING_MEMORY;
+	}
 	strcpy_s(file_path, path_len, main_folder_path);
 	strcat_s(file_path,path_len, FILE_NAME_RESIDENTS_NAMES);
 	fopen_s(&pfl_names, file_path, "r");
 	if (pfl_names == NULL) {
 		printf("cannot open names file");
+		free(file_path);
 		return ERR_CODE_OPEN_FILE;
 	}
 	int i = 0;
@@ -39,6 +44,8 @@ int initialization_names(char *main_folder_path, RESIDENT *p_residents, ROOM *p_
 		i += 1;
 	}
 	*residents_num = i;
+	fclose(pfl_names);
+	free(file_path);
 	return ERR_CODE_DEFAULT;
 }
 
@@ -48,11 +55,16 @@ int initialization_rooms(char *main_folder_path, ROOM *p_rooms,int *rooms_num) {
 	int MAX_PATH_LEN = strlen(main_folder_path) + LEN_FILE_NAME_RESIDENTS_NAMES;
 	char line[MAX_LINE_LENGTH] = "\0";
 	file_path = (char *)malloc(MAX_PATH_LEN * sizeof(char));
+	if (file_path == NULL) {			// cheack if memery allocation was successful
+		printf("Error when allocating memory");
+		return ERR_CODE_ALLOCCING_MEMORY;
+	}
 	strcpy_s(file_path, MAX_PATH_LEN, main_folder_path);
 	strcat_s(file_path, MAX_PATH_LEN, FILE_NAME_ROOMS_NAMES);
 	fopen_s(&pfl_rooms, file_path, "r");
 	if (pfl_rooms == NULL) {
-		printf("cannot open rooms file");
+		printf("cannot open rooms file\n");
+		free(file_path);
 		return ERR_CODE_OPEN_FILE;
 	}
 	int i = 0;
@@ -72,13 +84,15 @@ int initialization_rooms(char *main_folder_path, ROOM *p_rooms,int *rooms_num) {
 			NULL); /* un-named */
 
 		if (room_full == NULL) {
-			printf("cannot open rooms semaphore");
+			printf("cannot open rooms semaphore\n");
 			return ERR_CODE_SEMAPHORE;
 		}
 		p_rooms[i].room_full = room_full;
 		i += 1;
 	}
 	*rooms_num = i;
+	fclose(pfl_rooms);
+	free(file_path);
 	return ERR_CODE_DEFAULT;
 }
 
@@ -177,7 +191,7 @@ int create_resident_threads(HANDLE *p_resident_thread_handles, DWORD *p_thread_i
 int create_main_thread(HANDLE **p_main_thread_handle, DWORD *p_main_thread_id, main_thread_params *p_main_thread_params) {
 	int return_code = ERR_CODE_DEFAULT;		// if everything works properly err code default will be returned
 	BOOL ret_val;
-	*p_main_thread_handle = CreateThreadSimple(Promote_days,p_main_thread_params ,&p_main_thread_id);	// create thread
+	*p_main_thread_handle = CreateThreadSimple(Promote_days, p_main_thread_params, &p_main_thread_id);	// create thread
 	if (NULL == *p_main_thread_handle)	// check for errors
 		{
 		printf("Error when creating main thread: %d\n", GetLastError());
@@ -241,4 +255,72 @@ static HANDLE CreateThreadSimple(LPTHREAD_START_ROUTINE p_start_routine, LPVOID 
 
 	return thread_handle;
 }
+//-----------------------------------------------
+int check_arguments(int argc, int *return_code) {
+	if (argc < 2) {    //check if there are enough arguments
+		printf("No folder name entered");
+		*return_code = ERR_CODE_NOT_ENOUGH_ARGUMENTS;
+	}
+	return *return_code;
+}
 
+int create_and_check_mutex(
+	HANDLE *mutex_handle,
+	LPSECURITY_ATTRIBUTES lpMutexAttributes,
+	BOOL bInitialOwner,
+	LPCTSTR lpName,
+	int *return_code
+) {
+	*mutex_handle = CreateMutex(lpMutexAttributes, bInitialOwner, lpName);
+	if (*mutex_handle == NULL) {
+		printf("Error when creating mutex: %d\n", GetLastError());
+		*return_code = ERR_CODE_MUTEX;
+	}
+	return *return_code;
+}
+
+int open_and_check_mutex(
+	HANDLE *mutex_handle,
+	LPSECURITY_ATTRIBUTES lpMutexAttributes,
+	BOOL bInitialOwner,
+	LPCTSTR lpName,
+	int *return_code
+) {
+	*mutex_handle = OpenMutex(lpMutexAttributes, bInitialOwner, lpName);
+	if (*mutex_handle == NULL) {
+		printf("Error when opening mutex: %d\n", GetLastError());
+		*return_code = ERR_CODE_MUTEX;
+	}
+	return *return_code;
+}
+
+int lock_mutex(HANDLE *mutex_handle, int *return_code) {
+	DWORD wait_code;
+	wait_code = WaitForSingleObject(*mutex_handle, INFINITE);
+	if (wait_code != WAIT_OBJECT_0) {
+		printf("Error when locking mutex\n");
+		*return_code = ERR_CODE_MUTEX;
+		return ERR_CODE_MUTEX;
+	}
+	return ERR_CODE_DEFAULT;
+}
+
+int release_mutex(HANDLE *mutex_handle, int *return_code) {
+	BOOL ret_val;
+	ret_val = ReleaseMutex(*mutex_handle);
+	if (ret_val == FALSE) {
+		printf("Error when releasing mutex: %d\n", GetLastError());
+		*return_code = ERR_CODE_MUTEX;
+		return ERR_CODE_MUTEX;
+	}
+	return ERR_CODE_DEFAULT;
+}
+
+void close_handle(HANDLE handle) {
+	BOOL ret_val;
+	ret_val = CloseHandle(handle);
+	if (FALSE == ret_val)
+	{
+		printf("Error when closing handle: %d\n", GetLastError());
+	}
+}

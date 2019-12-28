@@ -15,7 +15,7 @@ DWORD WINAPI resident_enter_thread(LPVOID lpParam)
 	int return_code = ERR_CODE_DEFAULT;
 	resident_thread_params *p_resident_thread_params;			// pointer for the parameters
 	if (NULL == lpParam) {					// check if NULL was received instead of parameter
-		printf("Error declaring parameters in Thread");
+		printf("Error declaring parameters in Thread\n");
 		return ERR_CODE_THREAD;
 	}
 	p_resident_thread_params = (resident_thread_params *)lpParam;
@@ -41,7 +41,6 @@ int thread_function(resident_thread_params *p_resident_thread_params) {
 		return_code =  ERR_CODE_SEMAPHORE;
 		goto ERROR_OCCURRED;
 	}
-	char *name2 = p_resident_thread_params->p_resident.name;
 	//lock mutex on days
 	wait_code = WaitForSingleObject(days_mutex_handle, INFINITE);
 	if (wait_code != WAIT_OBJECT_0) {

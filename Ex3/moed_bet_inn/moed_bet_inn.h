@@ -62,3 +62,20 @@ DWORD WINAPI Promote_days(LPVOID lpParam);
 int main_thread_function(main_thread_params *p_main_thread_params);  //TODO
 DWORD WINAPI resident_enter_thread(LPVOID lpParam);
 int thread_function(resident_thread_params *p_params);   //TODO
+int check_arguments(int argc, int *return_code);
+int create_and_check_mutex(
+	HANDLE *mutex_handle,
+	LPSECURITY_ATTRIBUTES lpMutexAttributes,
+	BOOL bInitialOwner,
+	LPCTSTR lpName,
+	int *return_code);
+int open_and_check_mutex(
+	HANDLE *mutex_handle,
+	LPSECURITY_ATTRIBUTES lpMutexAttributes,
+	BOOL bInitialOwner,
+	LPCTSTR lpName,
+	int *return_code
+);
+int lock_mutex(HANDLE *mutex_handle, int *return_code);
+int release_mutex(HANDLE *mutex_handle, int *return_code);
+void close_handle(HANDLE handle);
