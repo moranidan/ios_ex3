@@ -49,7 +49,7 @@ int initialization_names(char *main_folder_path, RESIDENT *p_residents, ROOM *p_
 	return SUCCESS_CODE;
 }
 
-int initialization_rooms(char *main_folder_path, ROOM *p_rooms,int *rooms_num) {
+int initialization_rooms(char *main_folder_path, ROOM *p_rooms, int *rooms_num) {
 	FILE *pfl_rooms = NULL;
 	char *file_path;
 	int MAX_PATH_LEN = strlen(main_folder_path) + LEN_FILE_NAME_RESIDENTS_NAMES;
@@ -96,7 +96,7 @@ int initialization_rooms(char *main_folder_path, ROOM *p_rooms,int *rooms_num) {
 	return SUCCESS_CODE;
 }
 
-void initialization_p_resident_thread_params(char *main_folder_path,RESIDENT *p_residents,ROOM *p_rooms,resident_thread_params *p_resident_thread_params,int residents_num, int days, int *exits_residents, FILE *pf_roomlog) {
+void initialization_p_resident_thread_params(char *main_folder_path, RESIDENT *p_residents, ROOM *p_rooms, resident_thread_params *p_resident_thread_params, int residents_num, int days, int *exits_residents, FILE *pf_roomlog) {
 	for (int i = 0; i < residents_num; i++) {
 		p_resident_thread_params[i].main_folder_path = main_folder_path;
 		p_resident_thread_params[i].p_resident = p_residents[i];
@@ -107,7 +107,7 @@ void initialization_p_resident_thread_params(char *main_folder_path,RESIDENT *p_
 	}
 }
 
-void initialization_p_main_thread_params(RESIDENT *p_residents, ROOM *p_rooms, main_thread_params *p_main_thread_params,int residents_num, int *days, int *exits_residents) {
+void initialization_p_main_thread_params(RESIDENT *p_residents, ROOM *p_rooms, main_thread_params *p_main_thread_params, int residents_num, int *days, int *exits_residents) {
 	p_main_thread_params->p_days = days;
 	p_main_thread_params->p_residents = p_residents;
 	p_main_thread_params->p_rooms = p_rooms;
@@ -255,7 +255,8 @@ static HANDLE CreateThreadSimple(LPTHREAD_START_ROUTINE p_start_routine, LPVOID 
 
 	return thread_handle;
 }
-//-----------------------------------------------
+// utility functions --------------------------------------------------------------
+
 int check_arguments(int argc, int *return_code) {
 	if (argc < 2) {    //check if there are enough arguments
 		printf("No folder name entered");
@@ -316,11 +317,20 @@ int release_mutex(HANDLE *mutex_handle, int *return_code) {
 	return SUCCESS_CODE;
 }
 
-void close_handle(HANDLE handle) {
+void close_handle(HANDLE *handle) {
 	BOOL ret_val;
-	ret_val = CloseHandle(handle);
-	if (FALSE == ret_val)
-	{
+	ret_val = CloseHandle(*handle);
+	if (FALSE == ret_val) {
 		printf("Error when closing handle: %d\n", GetLastError());
+	}
+}
+
+void close_semaphors(ROOM *p_rooms, int *rooms_num) {
+	BOOL ret_val;
+	for (int i = 0; i < *rooms_num; i++) {
+		ret_val = CloseHandle(p_rooms[i].room_full);
+		if (FALSE == ret_val) {
+			printf("Error when closing sempahore handle: %d\n", GetLastError());
+		}
 	}
 }

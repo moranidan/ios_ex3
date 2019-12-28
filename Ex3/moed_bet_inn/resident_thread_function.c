@@ -5,6 +5,8 @@
 #include "moed_bet_inn.h"
 #include "HardCodedData.h"
 #include <stdio.h>
+#include <time.h>
+
 #pragma warning(disable:4996) // in order to avoid warning about fopen being unsafe function.
 //#define _CRT_SECURE_NO_WARNINGS /* to suppress compiler warnings (VS 2010 ) */
 
@@ -39,13 +41,13 @@ int thread_function(resident_thread_params *p_resident_thread_params) {
 	}
 	HANDLE file_mutex_handle = NULL;
 	if (open_and_check_mutex(&file_mutex_handle, SYNCHRONIZE, FALSE, MUTEX_ROOMLOG_FILE_NAME, &return_code) != SUCCESS_CODE) {
-		close_handle(days_mutex_handle);
+		close_handle(&days_mutex_handle);
 		return return_code;
 	}
 	HANDLE exit_residents_mutex_handle = NULL;
 	if (open_and_check_mutex(&exit_residents_mutex_handle, SYNCHRONIZE, FALSE, MUTEX_EXIT_RESIDENTS, &return_code) != SUCCESS_CODE) {
-		close_handle(days_mutex_handle);
-		close_handle(file_mutex_handle);
+		close_handle(&days_mutex_handle);
+		close_handle(&file_mutex_handle);
 		return return_code;
 	}
 	
@@ -136,8 +138,8 @@ int thread_function(resident_thread_params *p_resident_thread_params) {
 		}
 	}
 ERROR_OCCURRED:
-	close_handle(days_mutex_handle);
-	close_handle(file_mutex_handle);
-	close_handle(exit_residents_mutex_handle);
+	close_handle(&days_mutex_handle);
+	close_handle(&file_mutex_handle);
+	close_handle(&exit_residents_mutex_handle);
 	return return_code;
 }

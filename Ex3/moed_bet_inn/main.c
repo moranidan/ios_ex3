@@ -5,7 +5,7 @@ Authors –
 	Moran Idan - 315239079
 	Ofer Bear - 207943366
 Project - moed_bet_inn
-Description - This project TODO
+Description - This project implements exercise3, "MoedBetInn".
 */
 
 // Includes --------------------------------------------------------------------
@@ -79,8 +79,10 @@ int main(int argc, char *argv[]) {
 		return_code = ERR_CODE_ALLOCCING_MEMORY;
 		goto SKIP;
 	}
-	// no error handeling!!! malchitz
 	return_code = initialization_rooms(main_folder_path, p_rooms, &rooms_num); //TODO
+	if (return_code != SUCCESS_CODE) {
+		goto SKIP;
+	}
 
 	// initialize names struct
 	p_residents = (RESIDENT *)calloc(MAX_RESIDENT_NUM, sizeof(RESIDENT)); // allocate memory for resident parameters
@@ -89,8 +91,11 @@ int main(int argc, char *argv[]) {
 		return_code = ERR_CODE_ALLOCCING_MEMORY;
 		goto SKIP;
 	}
-	// no error handeling!!! malchitz
 	return_code = initialization_names(main_folder_path, p_residents, p_rooms, rooms_num, &residents_num); //TODO
+	if (return_code != SUCCESS_CODE) {
+		goto SKIP;
+	}
+
 
 	// create "main_thread", which updates 'days' variable
 	HANDLE p_main_thread_handle = NULL;
@@ -103,7 +108,10 @@ int main(int argc, char *argv[]) {
 	}
 	initialization_p_main_thread_params(p_residents, p_rooms, p_main_thread_params, residents_num, &days, &exits_residents);
 	return_code = create_main_thread(&p_main_thread_handle,p_main_thread_id, p_main_thread_params);
-	
+	if (return_code != SUCCESS_CODE) {
+		goto SKIP;
+	}
+
 	// create "resident_thread"s, which represent residents at the hotel
 	HANDLE p_resident_thread_handles[MAX_RESIDENT_NUM];	// array for residents handles
 	DWORD p_thread_ids[MAX_RESIDENT_NUM];		// array for thread id's
@@ -123,16 +131,19 @@ int main(int argc, char *argv[]) {
 		pf_roomlog
 	);
 	return_code = create_resident_threads(p_resident_thread_handles, p_thread_ids,&residents_num,p_resident_thread_params);
+	if (return_code != SUCCESS_CODE) {
+		goto SKIP;
+	}
 
 	// terminate main thread and exit
 	return_code = terminate_main_thread(&p_main_thread_handle, p_main_thread_id, p_main_thread_params);
 	printf("Total days: %d\n", days);
 
 	// close mutex handles
-	close_handle(days_mutex_handle);
-	close_handle(file_mutex_handle);
-	close_handle(exit_residents_mutex_handle);
-	// close_semaphors(*p_rooms, &rooms_num); // TODO
+	close_handle(&days_mutex_handle);
+	close_handle(&file_mutex_handle);
+	close_handle(&exit_residents_mutex_handle);
+	close_semaphors(p_rooms, &rooms_num);
 
 SKIP:
 	free(main_folder_path);
