@@ -1,5 +1,7 @@
 //resident_thread_function.c
 
+// Description - This module contain the function called when new resident thread is created.
+
 // Includes --------------------------------------------------------------------
 
 #include "moed_bet_inn.h"
@@ -8,7 +10,6 @@
 #include <time.h>
 
 #pragma warning(disable:4996) // in order to avoid warning about fopen being unsafe function.
-//#define _CRT_SECURE_NO_WARNINGS /* to suppress compiler warnings (VS 2010 ) */
 
 // Function Definitions --------------------------------------------------------
 DWORD WINAPI resident_enter_thread(LPVOID lpParam)
@@ -21,11 +22,11 @@ DWORD WINAPI resident_enter_thread(LPVOID lpParam)
 		return ERR_CODE_THREAD;
 	}
 	p_resident_thread_params = (resident_thread_params *)lpParam;
-	return_code = thread_function(p_resident_thread_params);
+	return_code = resident_thread_function(p_resident_thread_params);
 	return return_code;
 }
 
-int thread_function(resident_thread_params *p_resident_thread_params) {
+int resident_thread_function(resident_thread_params *p_resident_thread_params) {
 	char *name = p_resident_thread_params->p_resident.name;
 	int return_code = SUCCESS_CODE;
 	ROOM *p_rooms = p_resident_thread_params->p_rooms;
@@ -112,7 +113,7 @@ int thread_function(resident_thread_params *p_resident_thread_params) {
 				break;
 			}
 			// critical zone
-			int already_entered = *(p_resident_thread_params->p_exits_residents) + 1;
+			int already_entered = *(p_resident_thread_params->p_exits_residents) + 1; //update the exit_residents number
 			*(p_resident_thread_params->p_exits_residents) = already_entered;
 			//release mutex on exit residents
 			if (release_mutex(&exit_residents_mutex_handle, &return_code) != SUCCESS_CODE) {

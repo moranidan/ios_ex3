@@ -15,7 +15,11 @@ Description - This project implements exercise3, "MoedBetInn".
 #include <stdio.h>
 #include <windows.h>
 #pragma warning(disable:4996) // in order to avoid warning about fopen being unsafe function.
-//#define _CRT_SECURE_NO_WARNINGS /* to suppress compiler warnings (VS 2010 ) */
+
+/*
+In this entire project, we check for errors in each function that might fail.
+If there's a failure, we update the return code and use the 'goto' function to the end of main.c.
+*/
 
 // Function Definitions --------------------------------------------------------
 
@@ -30,7 +34,7 @@ int main(int argc, char *argv[]) {
 	RESIDENT *p_residents = NULL;	// array for resident struct
 	char *main_folder_path = NULL;		// main foldar path string
 	resident_thread_params *p_resident_thread_params = NULL;	// array for residents thread parameters struct
-	main_thread_params *p_main_thread_params = NULL;	// parameters struct for main_thread
+	promote_days_thread_params *p_promote_days_thread_params = NULL;	// parameters struct for main_thread
 
 	// copy main folders path
 	main_folder_path = (char *)malloc((strlen(argv[1])+1) * sizeof(char));
@@ -91,23 +95,23 @@ int main(int argc, char *argv[]) {
 		return_code = ERR_CODE_ALLOCCING_MEMORY;
 		goto SKIP;
 	}
-	return_code = initialization_names(main_folder_path, p_residents, p_rooms, rooms_num, &residents_num); //TODO
+	return_code = initialization_residents(main_folder_path, p_residents, p_rooms, rooms_num, &residents_num); //TODO
 	if (return_code != SUCCESS_CODE) {
 		goto SKIP;
 	}
 
 
-	// create "main_thread", which updates 'days' variable
-	HANDLE p_main_thread_handle = NULL;
-	DWORD p_main_thread_id = NULL;
-	p_main_thread_params = (main_thread_params *)calloc(1, sizeof(main_thread_params));
-	if (NULL == p_main_thread_params) {			// cheack if memery allocation was successful
+	// create "promote_days_thread", which updates 'days' variable
+	HANDLE p_promote_days_thread_handle = NULL;
+	DWORD p_promote_days_thread_id = NULL;
+	p_promote_days_thread_params = (promote_days_thread_params *)calloc(1, sizeof(promote_days_thread_params));
+	if (NULL == p_promote_days_thread_params) {			// cheack if memery allocation was successful
 		printf("Error when allocating memory");
 		return_code = ERR_CODE_ALLOCCING_MEMORY;
 		goto SKIP;
 	}
-	initialization_p_main_thread_params(p_residents, p_rooms, p_main_thread_params, residents_num, &days, &exits_residents);
-	return_code = create_main_thread(&p_main_thread_handle,p_main_thread_id, p_main_thread_params);
+	initialization_p_promote_days_thread_params(p_residents, p_rooms, p_promote_days_thread_params, residents_num, &days, &exits_residents);
+	return_code = create_promote_days_thread(&p_promote_days_thread_handle,p_promote_days_thread_id, p_promote_days_thread_params);
 	if (return_code != SUCCESS_CODE) {
 		goto SKIP;
 	}
@@ -135,8 +139,8 @@ int main(int argc, char *argv[]) {
 		goto SKIP;
 	}
 
-	// terminate main thread and exit
-	return_code = terminate_main_thread(&p_main_thread_handle, p_main_thread_id, p_main_thread_params);
+	// terminate promote_days thread and exit
+	return_code = terminate_promote_days_thread(&p_promote_days_thread_handle, p_promote_days_thread_id, p_promote_days_thread_params);
 	printf("Total days: %d\n", days);
 
 	// close mutex handles
@@ -150,7 +154,7 @@ SKIP:
 	free(p_rooms);
 	free(p_residents);
 	free(p_resident_thread_params);
-	free(p_main_thread_params);
+	free(p_promote_days_thread_params);
 	fclose(pf_roomlog);
 	return return_code;
 }

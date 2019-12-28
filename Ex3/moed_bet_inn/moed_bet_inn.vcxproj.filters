@@ -21,10 +21,10 @@
     <ClCompile Include="moed_bet_inn.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="main_thread_function.c">
+    <ClCompile Include="resident_thread_function.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="resident_thread_function.c">
+    <ClCompile Include="promote_days_thread_function.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

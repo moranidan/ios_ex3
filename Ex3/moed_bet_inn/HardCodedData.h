@@ -21,9 +21,9 @@
 #define FILE_NAME_RESIDENTS_NAMES "\\names.txt"
 #define FILE_NAME_ROOMS_NAMES "\\rooms.txt"
 #define FILE_NAME_BOOK_LOG "\\roomLog.txt"
-static LPCTSTR MUTEX_DAYS_NAME = _T("moed_bet_inn_days_mutex");  //creat mutex for the days varibel
-static LPCTSTR MUTEX_ROOMLOG_FILE_NAME = _T("moed_bet_inn_roomlog_file_mutex"); // creat mutex for the pointer to roomlog file
-static LPCTSTR MUTEX_EXIT_RESIDENTS = _T("moed_bet_inn_exit_residents_mutex");  //creat mutex for the exit_residents varibel
+static LPCTSTR MUTEX_DAYS_NAME = _T("moed_bet_inn_days_mutex");  //create mutex for the days varibel
+static LPCTSTR MUTEX_ROOMLOG_FILE_NAME = _T("moed_bet_inn_roomlog_file_mutex"); // create mutex for the pointer to roomlog file
+static LPCTSTR MUTEX_EXIT_RESIDENTS = _T("moed_bet_inn_exit_residents_mutex");  //create mutex for the exit_residents varible
 static const int SUCCESS_CODE = 0;
 static const int ERR_CODE_NOT_ENOUGH_ARGUMENTS = -5;
 static const int ERR_CODE_ALLOCCING_MEMORY = -6;

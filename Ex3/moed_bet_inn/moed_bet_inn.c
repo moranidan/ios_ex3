@@ -1,49 +1,51 @@
 //moed_bet_inn.c
 
+// Description - This module provides functions and tools for main.c
+
 // Includes --------------------------------------------------------------------
 
 #include "moed_bet_inn.h"
 #include "HardCodedData.h"
 #include <stdio.h>
 #pragma warning(disable:4996) // in order to avoid warning about fopen being unsafe function.
-//#define _CRT_SECURE_NO_WARNINGS /* to suppress compiler warnings (VS 2010 ) */
 
 
 // Function Definitions --------------------------------------------------------
-int initialization_names(char *main_folder_path, RESIDENT *p_residents, ROOM *p_rooms, int rooms_num, int *residents_num) {
+int initialization_residents(char *main_folder_path, RESIDENT *p_residents, ROOM *p_rooms, int rooms_num, int *residents_num) {
 	FILE *pfl_names = NULL;
 	char *file_path;
 	int path_len = strlen(main_folder_path) + LEN_FILE_NAME_RESIDENTS_NAMES;
 	char line[MAX_LINE_LENGTH] = "\0";
 	file_path = (char *)malloc(path_len * sizeof(char));
-	if (file_path == NULL) {			// cheack if memery allocation was successful
+	if (file_path == NULL) {			// check if memory allocation was successful
 		printf("Error when allocating memory");
 		return ERR_CODE_ALLOCCING_MEMORY;
 	}
 	strcpy_s(file_path, path_len, main_folder_path);
-	strcat_s(file_path,path_len, FILE_NAME_RESIDENTS_NAMES);
+	strcat_s(file_path,path_len, FILE_NAME_RESIDENTS_NAMES); // create the full path to names.txt file
 	fopen_s(&pfl_names, file_path, "r");
 	if (pfl_names == NULL) {
 		printf("cannot open names file");
 		free(file_path);
 		return ERR_CODE_OPEN_FILE;
 	}
-	int i = 0;
+	int i = 0;  // index to run over the lines in names.txt file
 	while (fgets(line, MAX_LINE_LENGTH, pfl_names)!=NULL) {
 		char delim[] = " ";		// split the path by this char
 		char *resident_name = strtok(line, delim);
 		strcpy_s(p_residents[i].name, MAX_NAME_INPUT, resident_name);
 		char *str_my_budget = strtok(NULL, delim);
 		p_residents[i].my_budget = atoi(str_my_budget);
-		for (int j = 0; j < rooms_num; j++) {
+		for (int j = 0; j < rooms_num; j++) {     // a loop that goes over the rooms and find the suitable room for the resident
 			if (p_residents[i].my_budget % p_rooms[j].price_per_night == 0) {
 				p_residents[i].my_room_num = j;
-				p_residents[i].room_days = p_residents[i].my_budget / p_rooms[j].price_per_night;
+				p_residents[i].room_days = p_residents[i].my_budget / p_rooms[j].price_per_night;  /* insert the number of days that the
+						                                                                                  resident can pay for */
 			}
 		}
-		i += 1;
+		i += 1;   // go over to the next line
 	}
-	*residents_num = i;
+	*residents_num = i;  //number of lines in names.txt file equal to the number of residents
 	fclose(pfl_names);
 	free(file_path);
 	return SUCCESS_CODE;
@@ -55,19 +57,19 @@ int initialization_rooms(char *main_folder_path, ROOM *p_rooms, int *rooms_num) 
 	int MAX_PATH_LEN = strlen(main_folder_path) + LEN_FILE_NAME_RESIDENTS_NAMES;
 	char line[MAX_LINE_LENGTH] = "\0";
 	file_path = (char *)malloc(MAX_PATH_LEN * sizeof(char));
-	if (file_path == NULL) {			// cheack if memery allocation was successful
+	if (file_path == NULL) {			// check if memory allocation was successful
 		printf("Error when allocating memory");
 		return ERR_CODE_ALLOCCING_MEMORY;
 	}
 	strcpy_s(file_path, MAX_PATH_LEN, main_folder_path);
-	strcat_s(file_path, MAX_PATH_LEN, FILE_NAME_ROOMS_NAMES);
+	strcat_s(file_path, MAX_PATH_LEN, FILE_NAME_ROOMS_NAMES); // create the full path to names.txt file
 	fopen_s(&pfl_rooms, file_path, "r");
 	if (pfl_rooms == NULL) {
 		printf("cannot open rooms file\n");
 		free(file_path);
 		return ERR_CODE_OPEN_FILE;
 	}
-	int i = 0;
+	int i = 0; // index to run over the lines in rooms.txt file
 	while (fgets(line, MAX_LINE_LENGTH, pfl_rooms) != NULL) {
 		char delim[] = " ";		// split the path by this char
 		char *room_name = strtok(line, delim);
@@ -88,9 +90,9 @@ int initialization_rooms(char *main_folder_path, ROOM *p_rooms, int *rooms_num) 
 			return ERR_CODE_SEMAPHORE;
 		}
 		p_rooms[i].room_full = room_full;
-		i += 1;
+		i += 1;  // go over to the next line
 	}
-	*rooms_num = i;
+	*rooms_num = i;  //number of lines in rooms.txt file equal to the number of rooms
 	fclose(pfl_rooms);
 	free(file_path);
 	return SUCCESS_CODE;
@@ -107,7 +109,7 @@ void initialization_p_resident_thread_params(char *main_folder_path, RESIDENT *p
 	}
 }
 
-void initialization_p_main_thread_params(RESIDENT *p_residents, ROOM *p_rooms, main_thread_params *p_main_thread_params, int residents_num, int *days, int *exits_residents) {
+void initialization_p_promote_days_thread_params(RESIDENT *p_residents, ROOM *p_rooms, promote_days_thread_params *p_main_thread_params, int residents_num, int *days, int *exits_residents) {
 	p_main_thread_params->p_days = days;
 	p_main_thread_params->p_residents = p_residents;
 	p_main_thread_params->p_rooms = p_rooms;
@@ -124,7 +126,7 @@ int open_roomLog_file(char *main_folder_path, FILE **pf_roomlog) {
 		return ERR_CODE_ALLOCCING_MEMORY;
 	}
 	strcpy_s(file_path, file_path_len, main_folder_path);
-	strcat_s(file_path, file_path_len, FILE_NAME_BOOK_LOG);
+	strcat_s(file_path, file_path_len, FILE_NAME_BOOK_LOG);  // create the full path to roomlog.txt file
 	fopen_s(pf_roomlog, file_path, "a");
 	if (*pf_roomlog == NULL) {
 		printf("cannot open BookLog file");
@@ -188,7 +190,7 @@ int create_resident_threads(HANDLE *p_resident_thread_handles, DWORD *p_thread_i
 	return return_code;
 }
 
-int create_main_thread(HANDLE **p_main_thread_handle, DWORD *p_main_thread_id, main_thread_params *p_main_thread_params) {
+int create_promote_days_thread(HANDLE **p_main_thread_handle, DWORD *p_main_thread_id, promote_days_thread_params *p_main_thread_params) {
 	int return_code = SUCCESS_CODE;		// if everything works properly err code default will be returned
 	BOOL ret_val;
 	*p_main_thread_handle = CreateThreadSimple(Promote_days, p_main_thread_params, &p_main_thread_id);	// create thread
@@ -201,7 +203,7 @@ int create_main_thread(HANDLE **p_main_thread_handle, DWORD *p_main_thread_id, m
 	return return_code;
 }
 
-int terminate_main_thread(HANDLE **p_main_thread_handle, DWORD *p_main_thread_id, main_thread_params *p_main_thread_params) {
+int terminate_promote_days_thread(HANDLE **p_main_thread_handle, DWORD *p_main_thread_id, promote_days_thread_params *p_main_thread_params) {
 	int return_code = SUCCESS_CODE;
 	DWORD wait_code;
 	BOOL ret_val;
@@ -255,6 +257,8 @@ static HANDLE CreateThreadSimple(LPTHREAD_START_ROUTINE p_start_routine, LPVOID 
 
 	return thread_handle;
 }
+
+
 // utility functions --------------------------------------------------------------
 
 int check_arguments(int argc, int *return_code) {

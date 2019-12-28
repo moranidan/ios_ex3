@@ -1,4 +1,6 @@
-//main_thread_function.c
+//promote_days_thread_function.c
+
+// Description - This module contain the function called when promote days thread is created.
 
 // Includes --------------------------------------------------------------------
 
@@ -6,24 +8,23 @@
 #include "HardCodedData.h"
 #include <stdio.h>
 #pragma warning(disable:4996) // in order to avoid warning about fopen being unsafe function.
-//#define _CRT_SECURE_NO_WARNINGS /* to suppress compiler warnings (VS 2010 ) */
 
 // Function Definitions --------------------------------------------------------
 DWORD WINAPI Promote_days(LPVOID lpParam)
 {
 	Sleep(10);								// as required
 	int return_code = SUCCESS_CODE;
-	main_thread_params *p_main_thread_params;			// pointer for the parameters
+	promote_days_thread_params *p_promote_days_thread_params;			// pointer for the parameters
 	if (NULL == lpParam) {					// check if NULL was received instead of parameter
 		printf("Error declaring parameters in Thread");
 		return ERR_CODE_THREAD;
 	}
-	p_main_thread_params = (main_thread_params *)lpParam;
-	return_code = main_thread_function(p_main_thread_params);
+	p_promote_days_thread_params = (promote_days_thread_params *)lpParam;
+	return_code = promote_days_thread_function(p_promote_days_thread_params);
 	return return_code;
 }
 
-int main_thread_function(main_thread_params *p_main_thread_params) {
+int promote_days_thread_function(promote_days_thread_params *p_promote_days_thread_params) {
 	int return_code = SUCCESS_CODE;
 
 	// open mutexes
@@ -47,7 +48,7 @@ int main_thread_function(main_thread_params *p_main_thread_params) {
 		}
 
 		// critical zone
-		*(p_main_thread_params->p_days) = *(p_main_thread_params->p_days) + 1;
+		*(p_promote_days_thread_params->p_days) = *(p_promote_days_thread_params->p_days) + 1;
 
 		// release days mutex
 		if (release_mutex(&days_mutex_handle, &return_code) != SUCCESS_CODE) {
@@ -62,7 +63,7 @@ int main_thread_function(main_thread_params *p_main_thread_params) {
 		}
 
 		//critical zone
-		if (*(p_main_thread_params->p_exits_residents) == p_main_thread_params->residents_num) {
+		if (*(p_promote_days_thread_params->p_exits_residents) == p_promote_days_thread_params->residents_num) {
 			// release mutex on exit residents
 			release_mutex(&exit_residents_mutex_handle, &return_code);
 			break;
