@@ -20,8 +20,8 @@ Description - This project TODO
 // Function Definitions --------------------------------------------------------
 
 int main(int argc, char *argv[]) {
-	int return_code = ERR_CODE_DEFAULT;
-	if (check_arguments(argc, &return_code) != ERR_CODE_DEFAULT){
+	int return_code = SUCCESS_CODE;
+	if (check_arguments(argc, &return_code) != SUCCESS_CODE){
 		return return_code;
 	}
 
@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
 	// open roomLog.txt file for appending
 	FILE *pf_roomlog = NULL;
 	return_code = open_roomLog_file(main_folder_path, &pf_roomlog);
-	if (return_code != ERR_CODE_DEFAULT) {
+	if (return_code != SUCCESS_CODE) {
 		free(main_folder_path);
 		return return_code;
 	}
@@ -53,19 +53,19 @@ int main(int argc, char *argv[]) {
 
 	// create days mutex
 	HANDLE days_mutex_handle = NULL;
-	if (create_and_check_mutex(&days_mutex_handle, NULL, FALSE, MUTEX_DAYS_NAME, &return_code) != ERR_CODE_DEFAULT) {
+	if (create_and_check_mutex(&days_mutex_handle, NULL, FALSE, MUTEX_DAYS_NAME, &return_code) != SUCCESS_CODE) {
 		goto SKIP;
 	}
 
 	// create roomLog.txt file mutex
 	HANDLE file_mutex_handle = NULL;
-	if (create_and_check_mutex(&file_mutex_handle, NULL, FALSE, MUTEX_ROOMLOG_FILE_NAME, &return_code) != ERR_CODE_DEFAULT) {
+	if (create_and_check_mutex(&file_mutex_handle, NULL, FALSE, MUTEX_ROOMLOG_FILE_NAME, &return_code) != SUCCESS_CODE) {
 		goto SKIP;
 	}
 
 	// create exit_residents mutex
 	HANDLE exit_residents_mutex_handle = NULL;
-	if (create_and_check_mutex(&exit_residents_mutex_handle, NULL, FALSE, MUTEX_EXIT_RESIDENTS, &return_code) != ERR_CODE_DEFAULT) {
+	if (create_and_check_mutex(&exit_residents_mutex_handle, NULL, FALSE, MUTEX_EXIT_RESIDENTS, &return_code) != SUCCESS_CODE) {
 		goto SKIP;
 	}
 

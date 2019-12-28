@@ -46,7 +46,7 @@ int initialization_names(char *main_folder_path, RESIDENT *p_residents, ROOM *p_
 	*residents_num = i;
 	fclose(pfl_names);
 	free(file_path);
-	return ERR_CODE_DEFAULT;
+	return SUCCESS_CODE;
 }
 
 int initialization_rooms(char *main_folder_path, ROOM *p_rooms,int *rooms_num) {
@@ -93,7 +93,7 @@ int initialization_rooms(char *main_folder_path, ROOM *p_rooms,int *rooms_num) {
 	*rooms_num = i;
 	fclose(pfl_rooms);
 	free(file_path);
-	return ERR_CODE_DEFAULT;
+	return SUCCESS_CODE;
 }
 
 void initialization_p_resident_thread_params(char *main_folder_path,RESIDENT *p_residents,ROOM *p_rooms,resident_thread_params *p_resident_thread_params,int residents_num, int days, int *exits_residents, FILE *pf_roomlog) {
@@ -132,13 +132,13 @@ int open_roomLog_file(char *main_folder_path, FILE **pf_roomlog) {
 		return ERR_CODE_OPEN_FILE;
 	}
 	free(file_path);
-	return ERR_CODE_DEFAULT;
+	return SUCCESS_CODE;
 }
 
 //create threads functions -----------------------------------------------------------------------------------------
 
 int create_resident_threads(HANDLE *p_resident_thread_handles, DWORD *p_thread_ids, int *residents_num, resident_thread_params *p_resident_thread_params){
-	int return_code = ERR_CODE_DEFAULT;		// if everything works properly err code default will be returned
+	int return_code = SUCCESS_CODE;		// if everything works properly err code default will be returned
 	BOOL ret_val;
 
 	for (int i = 0; i < *residents_num; i++)			// create thread for every resident
@@ -175,7 +175,7 @@ int create_resident_threads(HANDLE *p_resident_thread_handles, DWORD *p_thread_i
 			printf("Error when trying to get threads exit code");
 			return_code = ERR_CODE_THREAD;
 		}
-		if (thread_exit_code != ERR_CODE_DEFAULT) {
+		if (thread_exit_code != SUCCESS_CODE) {
 			return_code = ERR_CODE_THREAD;
 		}
 		ret_val = CloseHandle(p_resident_thread_handles[j]);
@@ -189,7 +189,7 @@ int create_resident_threads(HANDLE *p_resident_thread_handles, DWORD *p_thread_i
 }
 
 int create_main_thread(HANDLE **p_main_thread_handle, DWORD *p_main_thread_id, main_thread_params *p_main_thread_params) {
-	int return_code = ERR_CODE_DEFAULT;		// if everything works properly err code default will be returned
+	int return_code = SUCCESS_CODE;		// if everything works properly err code default will be returned
 	BOOL ret_val;
 	*p_main_thread_handle = CreateThreadSimple(Promote_days, p_main_thread_params, &p_main_thread_id);	// create thread
 	if (NULL == *p_main_thread_handle)	// check for errors
@@ -202,7 +202,7 @@ int create_main_thread(HANDLE **p_main_thread_handle, DWORD *p_main_thread_id, m
 }
 
 int terminate_main_thread(HANDLE **p_main_thread_handle, DWORD *p_main_thread_id, main_thread_params *p_main_thread_params) {
-	int return_code = ERR_CODE_DEFAULT;
+	int return_code = SUCCESS_CODE;
 	DWORD wait_code;
 	BOOL ret_val;
 	wait_code = WaitForSingleObject(*p_main_thread_handle, INFINITE);	// wait for threads to run
@@ -302,7 +302,7 @@ int lock_mutex(HANDLE *mutex_handle, int *return_code) {
 		*return_code = ERR_CODE_MUTEX;
 		return ERR_CODE_MUTEX;
 	}
-	return ERR_CODE_DEFAULT;
+	return SUCCESS_CODE;
 }
 
 int release_mutex(HANDLE *mutex_handle, int *return_code) {
@@ -313,7 +313,7 @@ int release_mutex(HANDLE *mutex_handle, int *return_code) {
 		*return_code = ERR_CODE_MUTEX;
 		return ERR_CODE_MUTEX;
 	}
-	return ERR_CODE_DEFAULT;
+	return SUCCESS_CODE;
 }
 
 void close_handle(HANDLE handle) {

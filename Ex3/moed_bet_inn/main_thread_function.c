@@ -12,7 +12,7 @@
 DWORD WINAPI Promote_days(LPVOID lpParam)
 {
 	Sleep(10);								// as required
-	int return_code = ERR_CODE_DEFAULT;
+	int return_code = SUCCESS_CODE;
 	main_thread_params *p_main_thread_params;			// pointer for the parameters
 	if (NULL == lpParam) {					// check if NULL was received instead of parameter
 		printf("Error declaring parameters in Thread");
@@ -24,15 +24,15 @@ DWORD WINAPI Promote_days(LPVOID lpParam)
 }
 
 int main_thread_function(main_thread_params *p_main_thread_params) {
-	int return_code = ERR_CODE_DEFAULT;
+	int return_code = SUCCESS_CODE;
 
 	// open mutexes
 	HANDLE days_mutex_handle = NULL;
-	if (open_and_check_mutex(&days_mutex_handle, SYNCHRONIZE, FALSE, MUTEX_DAYS_NAME, &return_code) != ERR_CODE_DEFAULT) {
+	if (open_and_check_mutex(&days_mutex_handle, SYNCHRONIZE, FALSE, MUTEX_DAYS_NAME, &return_code) != SUCCESS_CODE) {
 		return ERR_CODE_MUTEX;
 	}
 	HANDLE exit_residents_mutex_handle = NULL;
-	if (open_and_check_mutex(&exit_residents_mutex_handle, SYNCHRONIZE, FALSE, MUTEX_EXIT_RESIDENTS, &return_code) != ERR_CODE_DEFAULT) {
+	if (open_and_check_mutex(&exit_residents_mutex_handle, SYNCHRONIZE, FALSE, MUTEX_EXIT_RESIDENTS, &return_code) != SUCCESS_CODE) {
 		close_handle(days_mutex_handle);
 		return ERR_CODE_MUTEX;
 	}
@@ -42,7 +42,7 @@ int main_thread_function(main_thread_params *p_main_thread_params) {
 		Sleep(200);
 
 		// lock days mutex
-		if (lock_mutex(&days_mutex_handle, &return_code) != ERR_CODE_DEFAULT) {
+		if (lock_mutex(&days_mutex_handle, &return_code) != SUCCESS_CODE) {
 			break;
 		}
 
@@ -50,14 +50,14 @@ int main_thread_function(main_thread_params *p_main_thread_params) {
 		*(p_main_thread_params->p_days) = *(p_main_thread_params->p_days) + 1;
 
 		// release days mutex
-		if (release_mutex(&days_mutex_handle, &return_code) != ERR_CODE_DEFAULT) {
+		if (release_mutex(&days_mutex_handle, &return_code) != SUCCESS_CODE) {
 			break;
 		}
 
 		Sleep(200);
 
 		// lock exit_residents mutex
-		if (lock_mutex(&exit_residents_mutex_handle, &return_code) != ERR_CODE_DEFAULT) {
+		if (lock_mutex(&exit_residents_mutex_handle, &return_code) != SUCCESS_CODE) {
 			break;
 		}
 
@@ -68,7 +68,7 @@ int main_thread_function(main_thread_params *p_main_thread_params) {
 			break;
 		}
 		//release mutex on exit residents
-		if (release_mutex(&exit_residents_mutex_handle, &return_code) != ERR_CODE_DEFAULT) {
+		if (release_mutex(&exit_residents_mutex_handle, &return_code) != SUCCESS_CODE) {
 			break;
 		}
 	}
