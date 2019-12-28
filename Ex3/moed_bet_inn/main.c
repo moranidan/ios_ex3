@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
 		goto SKIP;
 	}
 
-	// create exit_residents mmutex
+	// create exit_residents mutex
 	HANDLE exit_residents_mutex_handle = NULL;
 	if (create_and_check_mutex(&exit_residents_mutex_handle, NULL, FALSE, MUTEX_EXIT_RESIDENTS, &return_code) != ERR_CODE_DEFAULT) {
 		goto SKIP;
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
 	initialization_p_main_thread_params(p_residents, p_rooms, p_main_thread_params, residents_num, &days, &exits_residents);
 	return_code = create_main_thread(&p_main_thread_handle,p_main_thread_id, p_main_thread_params);
 	
-	// create "resident_thread", which represents a resident at the hotel
+	// create "resident_thread"s, which represent residents at the hotel
 	HANDLE p_resident_thread_handles[MAX_RESIDENT_NUM];	// array for residents handles
 	DWORD p_thread_ids[MAX_RESIDENT_NUM];		// array for thread id's
 	p_resident_thread_params = (resident_thread_params *)calloc(residents_num, sizeof(resident_thread_params)); // allocate memory for resident therad parameters
@@ -132,6 +132,7 @@ int main(int argc, char *argv[]) {
 	close_handle(days_mutex_handle);
 	close_handle(file_mutex_handle);
 	close_handle(exit_residents_mutex_handle);
+	// close_semaphors(*p_rooms, &rooms_num); // TODO
 
 SKIP:
 	free(main_folder_path);
